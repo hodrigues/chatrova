@@ -22,7 +22,7 @@
 module.exports = function(bp) {
   // Listens for a first message (this is a Regex)
   // GET_STARTED is the first message you get on Facebook Messenger
-  bp.hear(/GET_STARTED|hello|hi|test|hey|holla/i, (event, next) => {
+  bp.hear(/GET_STARTED|hello|hi|test|oi|hey|holla/i, (event, next) => {
     event.reply('#welcome') // See the file `content.yml` to see the block
   })
 
@@ -37,3 +37,35 @@ module.exports = function(bp) {
     })
   })
 }
+
+bp.hear('STOP_CONVO', (event, next) => {
+  const convo = bp.convo.find(event)
+  if (convo) {
+    convo.stop('aborted')
+  }
+})
+
+bp.hear('MENU_CONVO_EX_02', (event, next) => {
+  if (bp.convo.find(event)) {
+    return event.reply('#askStopConvo')
+  }
+
+  bp.convo.start(event, convo => {
+    convo.threads['default'].addQuestion('#askUserAge', [
+      {
+        pattern: /(\d+)/,
+        callback: response => {
+          convo.say('#askUserAge_reply', { age: response.match })
+          convo.next()
+        }
+      },
+      { 
+        default: true, 
+        callback: response => {
+          convo.say('#askUserAge_miss')
+          convo.repeat()
+        }
+      }
+    ])
+  })
+})
